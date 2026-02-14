@@ -334,21 +334,50 @@
   overflow-y: auto;
 }
 
-/* ===== フォーム ===== */
-.form-section {
-  margin-bottom: 20px;
+/* ===== セクションカード ===== */
+.section-card {
+  margin-bottom: 16px;
+  border: 1.5px solid var(--gray-200);
+  border-radius: var(--radius);
+  overflow: hidden;
 }
 
-.form-heading {
+.section-card--input {
+  border-color: var(--pink-200);
+}
+
+.section-card-title {
   font-size: 0.95rem;
-  font-weight: 600;
+  font-weight: 700;
   color: var(--gray-700);
-  margin-bottom: 12px;
+  padding: 12px 16px;
+  background: var(--gray-50);
+  border-bottom: 1.5px solid var(--gray-200);
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: 8px;
 }
 
+.section-card--input .section-card-title {
+  background: var(--pink-50);
+  border-bottom-color: var(--pink-200);
+  color: var(--pink-600);
+}
+
+.section-card-body {
+  padding: 16px;
+}
+
+.section-card-content {
+  padding: 14px 16px;
+  font-size: 0.85rem;
+  line-height: 1.7;
+  white-space: pre-wrap;
+  word-break: break-word;
+  color: var(--gray-700);
+}
+
+/* ===== フォーム ===== */
 .form-field {
   margin-bottom: 14px;
 }
@@ -392,34 +421,6 @@
   padding-left: 2px;
 }
 
-/* ===== プレビュー ===== */
-.preview-section {
-  margin-bottom: 8px;
-}
-
-.preview-heading {
-  font-size: 0.95rem;
-  font-weight: 600;
-  color: var(--gray-700);
-  margin-bottom: 10px;
-  display: flex;
-  align-items: center;
-  gap: 6px;
-}
-
-.preview-box {
-  background: var(--gray-50);
-  border: 1.5px solid var(--gray-200);
-  border-radius: var(--radius-sm);
-  padding: 14px 16px;
-  font-size: 0.85rem;
-  line-height: 1.7;
-  white-space: pre-wrap;
-  word-break: break-word;
-  color: var(--gray-700);
-  max-height: 300px;
-  overflow-y: auto;
-}
 
 /* ===== フッター（コピーボタン） ===== */
 .modal-footer {

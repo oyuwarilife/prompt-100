@@ -13,7 +13,6 @@ interface FormField {
 
 function extractFields(content: string): FormField[] {
   const fields: FormField[] = [];
-  // [○○] と {○○} の両方を対象にする
   const regex = /[\[{]([^\]{}]+)[\]}]/g;
   let match;
   let id = 0;
@@ -22,11 +21,10 @@ function extractFields(content: string): FormField[] {
     const original = match[0];
     const inner = match[1];
 
-    // 出力形式のマーカーなどは除外（①②③ や 表 など）
+    // 出力形式マーカー・番号・固定テキストは除外
     if (/^[①-⑩\d]/.test(inner)) continue;
     if (inner === "条件" || inner === "出力形式") continue;
 
-    // 同じ行のブラケット手前のテキストをラベルにする
     const lineStart = content.lastIndexOf("\n", match.index) + 1;
     const beforeBracket = content
       .substring(lineStart, match.index)
@@ -47,7 +45,6 @@ function extractFields(content: string): FormField[] {
       placeholder = "ここに入力してください";
       hint = "自由に入力してください";
     } else if (inner.includes("/")) {
-      // [はい/いいえ] のような選択肢
       placeholder = inner;
       hint = `${inner} から選んでください`;
     } else {
@@ -55,13 +52,7 @@ function extractFields(content: string): FormField[] {
       hint = `${inner} を入力してください`;
     }
 
-    fields.push({
-      id: `field_${id}`,
-      label,
-      placeholder,
-      hint,
-      original,
-    });
+    fields.push({ id: `field_${id}`, label, placeholder, hint, original });
     id++;
   }
 
@@ -79,6 +70,48 @@ function buildPrompt(
     result = result.replace(field.original, val);
   }
   return result;
+}
+
+// --- セクション分割ロジック ---
+interface PromptSection {
+  title: string;
+  content: string;
+  icon: string;
+}
+
+const sectionIconMap: Record<string, string> = {
+  あなたの役割: "🤖",
+  条件: "📋",
+  出力形式: "📤",
+};
+
+function parsePromptSections(content: string): PromptSection[] {
+  const sections: PromptSection[] = [];
+  // 【○○】で分割
+  const parts = content.split(/(?=【[^】]+】)/);
+
+  for (const part of parts) {
+    const markerMatch = part.match(/^【([^】]+)】\n?([\s\S]*)/);
+    if (markerMatch) {
+      const title = markerMatch[1];
+      const body = markerMatch[2].trim();
+      if (body) {
+        sections.push({
+          title,
+          content: body,
+          icon: sectionIconMap[title] || "📄",
+        });
+      }
+    } else if (part.trim()) {
+      sections.push({
+        title: "あなたの役割",
+        content: part.trim(),
+        icon: "🤖",
+      });
+    }
+  }
+
+  return sections;
 }
 
 // --- カテゴリアイコン ---
@@ -126,6 +159,12 @@ function App() {
     return buildPrompt(selectedPrompt.content, currentFields, formValues);
   }, [selectedPrompt, currentFields, formValues]);
 
+  // 完成プロンプトをセクション分割して表示
+  const completedSections = useMemo(() => {
+    if (!completedPrompt) return [];
+    return parsePromptSections(completedPrompt);
+  }, [completedPrompt]);
+
   const handleSelectPrompt = useCallback((prompt: Prompt) => {
     setSelectedPrompt(prompt);
     setFormValues({});
@@ -144,7 +183,6 @@ function App() {
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
     } catch {
-      // fallback
       const textarea = document.createElement("textarea");
       textarea.value = completedPrompt;
       document.body.appendChild(textarea);
@@ -221,12 +259,12 @@ function App() {
               {categoryIcons[prompt.category]} {prompt.category}
             </span>
             <h3 className="card-title">
-              <span className="card-number">#{String(prompt.id).padStart(3, "0")}</span>
+              <span className="card-number">
+                #{String(prompt.id).padStart(3, "0")}
+              </span>
               {prompt.title}
             </h3>
-            <p className="card-preview">
-              {prompt.description}
-            </p>
+            <p className="card-preview">{prompt.description}</p>
           </button>
         ))}
       </div>
@@ -251,7 +289,9 @@ function App() {
                 {selectedPrompt.category}
               </span>
               <h2 className="modal-title">
-                <span className="modal-number">#{String(selectedPrompt.id).padStart(3, "0")}</span>
+                <span className="modal-number">
+                  #{String(selectedPrompt.id).padStart(3, "0")}
+                </span>
                 {selectedPrompt.title}
               </h2>
               {selectedPrompt.description && (
@@ -259,52 +299,60 @@ function App() {
                   <span className="description-icon">🎯</span>
                   <div>
                     <span className="description-label">ねらい</span>
-                    <p className="description-text">{selectedPrompt.description}</p>
+                    <p className="description-text">
+                      {selectedPrompt.description}
+                    </p>
                   </div>
                 </div>
               )}
             </div>
 
             <div className="modal-body">
-              {/* 入力フォーム */}
+              {/* ユーザー入力フォーム */}
               {currentFields.length > 0 && (
-                <div className="form-section">
-                  <h3 className="form-heading">
-                    <span>📝</span> あなたの情報を入力
+                <div className="section-card section-card--input">
+                  <h3 className="section-card-title">
+                    <span>📝</span> ユーザー入力
                   </h3>
-                  {currentFields.map((field) => (
-                    <div key={field.id} className="form-field">
-                      <label className="form-label" htmlFor={field.id}>
-                        {field.label}
-                      </label>
-                      <textarea
-                        id={field.id}
-                        className="form-input"
-                        placeholder={field.placeholder}
-                        value={formValues[field.id] || ""}
-                        onChange={(e) =>
-                          setFormValues((prev) => ({
-                            ...prev,
-                            [field.id]: e.target.value,
-                          }))
-                        }
-                        rows={2}
-                      />
-                      {field.hint && (
-                        <span className="form-hint">💡 {field.hint}</span>
-                      )}
-                    </div>
-                  ))}
+                  <div className="section-card-body">
+                    {currentFields.map((field) => (
+                      <div key={field.id} className="form-field">
+                        <label className="form-label" htmlFor={field.id}>
+                          {field.label}
+                        </label>
+                        <textarea
+                          id={field.id}
+                          className="form-input"
+                          placeholder={field.placeholder}
+                          value={formValues[field.id] || ""}
+                          onChange={(e) =>
+                            setFormValues((prev) => ({
+                              ...prev,
+                              [field.id]: e.target.value,
+                            }))
+                          }
+                          rows={2}
+                        />
+                        {field.hint && (
+                          <span className="form-hint">💡 {field.hint}</span>
+                        )}
+                      </div>
+                    ))}
+                  </div>
                 </div>
               )}
 
-              {/* プレビュー */}
-              <div className="preview-section">
-                <h3 className="preview-heading">
-                  <span>📋</span> 完成プロンプト
-                </h3>
-                <div className="preview-box">{completedPrompt}</div>
-              </div>
+              {/* セクションカード */}
+              {completedSections.map((section, i) => (
+                <div key={i} className="section-card">
+                  <h3 className="section-card-title">
+                    <span>{section.icon}</span> {section.title}
+                  </h3>
+                  <div className="section-card-content">
+                    {section.content}
+                  </div>
+                </div>
+              ))}
             </div>
 
             {/* コピーボタン */}
