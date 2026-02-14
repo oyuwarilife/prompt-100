@@ -21,7 +21,6 @@ function extractFields(content: string): FormField[] {
     const original = match[0];
     const inner = match[1];
 
-    // 出力形式マーカー・番号・固定テキストは除外
     if (/^[①-⑩\d]/.test(inner)) continue;
     if (inner === "条件" || inner === "出力形式") continue;
 
@@ -87,7 +86,6 @@ const sectionIconMap: Record<string, string> = {
 
 function parsePromptSections(content: string): PromptSection[] {
   const sections: PromptSection[] = [];
-  // 【○○】で分割
   const parts = content.split(/(?=【[^】]+】)/);
 
   for (const part of parts) {
@@ -128,6 +126,30 @@ const categoryIcons: Record<string, string> = {
   "家庭との両立": "🏠",
 };
 
+// --- 折りたたみセクションカード ---
+function CollapsibleSection({ section }: { section: PromptSection }) {
+  const [open, setOpen] = useState(false);
+
+  return (
+    <div className={`section-card ${open ? "section-card--open" : ""}`}>
+      <button
+        className="section-card-title section-card-toggle"
+        onClick={() => setOpen(!open)}
+        type="button"
+      >
+        <span>{section.icon}</span>
+        <span className="section-card-label">{section.title}</span>
+        <span className={`section-card-arrow ${open ? "open" : ""}`}>
+          &#9662;
+        </span>
+      </button>
+      {open && (
+        <div className="section-card-content">{section.content}</div>
+      )}
+    </div>
+  );
+}
+
 // --- メインコンポーネント ---
 function App() {
   const [selectedCategory, setSelectedCategory] = useState("すべて");
@@ -159,7 +181,6 @@ function App() {
     return buildPrompt(selectedPrompt.content, currentFields, formValues);
   }, [selectedPrompt, currentFields, formValues]);
 
-  // 完成プロンプトをセクション分割して表示
   const completedSections = useMemo(() => {
     if (!completedPrompt) return [];
     return parsePromptSections(completedPrompt);
@@ -181,7 +202,7 @@ function App() {
     try {
       await navigator.clipboard.writeText(completedPrompt);
       setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
+      setTimeout(() => setCopied(false), 3000);
     } catch {
       const textarea = document.createElement("textarea");
       textarea.value = completedPrompt;
@@ -190,7 +211,7 @@ function App() {
       document.execCommand("copy");
       document.body.removeChild(textarea);
       setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
+      setTimeout(() => setCopied(false), 3000);
     }
   }, [completedPrompt]);
 
@@ -206,6 +227,24 @@ function App() {
           主婦の在宅ワークを応援するAIプロンプト集
         </p>
       </header>
+
+      {/* 使い方ガイド */}
+      <div className="how-to-use">
+        <div className="step">
+          <span className="step-number">1</span>
+          <span className="step-text">プロンプトを選ぶ</span>
+        </div>
+        <span className="step-arrow">→</span>
+        <div className="step">
+          <span className="step-number">2</span>
+          <span className="step-text">情報を入力</span>
+        </div>
+        <span className="step-arrow">→</span>
+        <div className="step">
+          <span className="step-number">3</span>
+          <span className="step-text">コピーしてAIに貼り付け</span>
+        </div>
+      </div>
 
       {/* 検索 */}
       <div className="search-bar">
@@ -312,7 +351,8 @@ function App() {
               {currentFields.length > 0 && (
                 <div className="section-card section-card--input">
                   <h3 className="section-card-title">
-                    <span>📝</span> ユーザー入力
+                    <span>📝</span>
+                    <span className="section-card-label">ユーザー入力</span>
                   </h3>
                   <div className="section-card-body">
                     {currentFields.map((field) => (
@@ -342,16 +382,9 @@ function App() {
                 </div>
               )}
 
-              {/* セクションカード */}
+              {/* セクションカード（折りたたみ） */}
               {completedSections.map((section, i) => (
-                <div key={i} className="section-card">
-                  <h3 className="section-card-title">
-                    <span>{section.icon}</span> {section.title}
-                  </h3>
-                  <div className="section-card-content">
-                    {section.content}
-                  </div>
-                </div>
+                <CollapsibleSection key={i} section={section} />
               ))}
             </div>
 
@@ -361,8 +394,13 @@ function App() {
                 className={`copy-button ${copied ? "copied" : ""}`}
                 onClick={handleCopy}
               >
-                {copied ? "✅ コピーしました！" : "📋 プロンプトをコピー"}
+                {copied
+                  ? "✅ コピーしました！ChatGPTに貼り付けてね"
+                  : "📋 プロンプトをコピー"}
               </button>
+              <p className="copy-guide">
+                コピーしたら ChatGPT や Claude に貼り付けて使えます
+              </p>
             </div>
           </div>
         </div>
