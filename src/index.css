@@ -1,0 +1,47 @@
+:root {
+  --pink-50: #fff5f7;
+  --pink-100: #ffe0e6;
+  --pink-200: #ffb8c6;
+  --pink-300: #ff8da6;
+  --pink-400: #f76b8a;
+  --pink-500: #e8456a;
+  --pink-600: #d32f5a;
+  --white: #ffffff;
+  --gray-50: #fafafa;
+  --gray-100: #f5f5f5;
+  --gray-200: #e5e5e5;
+  --gray-300: #d4d4d4;
+  --gray-500: #737373;
+  --gray-600: #525252;
+  --gray-700: #404040;
+  --gray-800: #262626;
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.05);
+  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.08),
+    0 2px 4px -2px rgba(0, 0, 0, 0.05);
+  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.08),
+    0 4px 6px -4px rgba(0, 0, 0, 0.05);
+  --radius: 12px;
+  --radius-sm: 8px;
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: "Hiragino Kaku Gothic ProN", "Hiragino Sans", "BIZ UDPGothic",
+    "Noto Sans JP", sans-serif;
+  background-color: var(--pink-50);
+  color: var(--gray-800);
+  line-height: 1.6;
+  min-height: 100vh;
+  -webkit-font-smoothing: antialiased;
+}
+
+#root {
+  max-width: 960px;
+  margin: 0 auto;
+  padding: 0 16px 80px;
+}
