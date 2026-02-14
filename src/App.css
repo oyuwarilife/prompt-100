@@ -556,6 +556,23 @@
   }
 }
 
+@media (max-width: 480px) {
+  .how-to-use {
+    border-radius: var(--radius);
+    gap: 4px;
+    padding: 10px 12px;
+  }
+
+  .step-text {
+    font-size: 0.7rem;
+    white-space: normal;
+  }
+
+  .step-arrow {
+    font-size: 0.7rem;
+  }
+}
+
 @media (max-width: 400px) {
   .prompt-grid {
     grid-template-columns: 1fr;
