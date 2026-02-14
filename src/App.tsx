@@ -7,6 +7,7 @@ interface FormField {
   id: string;
   label: string;
   placeholder: string;
+  hint: string;
   original: string;
 }
 
@@ -36,22 +37,29 @@ function extractFields(content: string): FormField[] {
 
     let label = beforeBracket || `入力 ${id + 1}`;
     let placeholder = "";
+    let hint = "";
 
     if (inner.startsWith("例：") || inner.startsWith("例:")) {
-      placeholder = inner.replace(/^例[：:]/, "");
+      const example = inner.replace(/^例[：:]/, "");
+      placeholder = example;
+      hint = `例：${example}`;
     } else if (inner === "入力") {
       placeholder = "ここに入力してください";
+      hint = "自由に入力してください";
     } else if (inner.includes("/")) {
       // [はい/いいえ] のような選択肢
       placeholder = inner;
+      hint = `${inner} から選んでください`;
     } else {
       placeholder = inner;
+      hint = `${inner} を入力してください`;
     }
 
     fields.push({
       id: `field_${id}`,
       label,
       placeholder,
+      hint,
       original,
     });
     id++;
@@ -212,9 +220,12 @@ function App() {
             <span className="card-category">
               {categoryIcons[prompt.category]} {prompt.category}
             </span>
-            <h3 className="card-title">{prompt.title}</h3>
+            <h3 className="card-title">
+              <span className="card-number">#{String(prompt.id).padStart(3, "0")}</span>
+              {prompt.title}
+            </h3>
             <p className="card-preview">
-              {prompt.content.slice(0, 60)}...
+              {prompt.description}
             </p>
           </button>
         ))}
@@ -239,7 +250,19 @@ function App() {
                 {categoryIcons[selectedPrompt.category]}{" "}
                 {selectedPrompt.category}
               </span>
-              <h2 className="modal-title">{selectedPrompt.title}</h2>
+              <h2 className="modal-title">
+                <span className="modal-number">#{String(selectedPrompt.id).padStart(3, "0")}</span>
+                {selectedPrompt.title}
+              </h2>
+              {selectedPrompt.description && (
+                <div className="modal-description">
+                  <span className="description-icon">🎯</span>
+                  <div>
+                    <span className="description-label">ねらい</span>
+                    <p className="description-text">{selectedPrompt.description}</p>
+                  </div>
+                </div>
+              )}
             </div>
 
             <div className="modal-body">
@@ -267,6 +290,9 @@ function App() {
                         }
                         rows={2}
                       />
+                      {field.hint && (
+                        <span className="form-hint">💡 {field.hint}</span>
+                      )}
                     </div>
                   ))}
                 </div>
